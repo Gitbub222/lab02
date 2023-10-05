@@ -6,7 +6,7 @@
 
 //USE https://developer.arm.com/documentation/ddi0183/g/programmers-model/summary-of-registers
 
-// define UART register here
+// define UART registers here
 #define UARTDR     (PBASE+0x000)
 
 

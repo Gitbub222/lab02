@@ -22,6 +22,7 @@ void uart_send_string(char* str)
 
 void uart_init ( void )
 {
+	//implement init function here for pl011
 	unsigned int selector;
 
 }
