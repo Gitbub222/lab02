@@ -42,9 +42,9 @@ void uart_init(void)
 
 	// (A) Configure GPIO pins
 	unsigned int selector = get32(GPFSEL1);
-	selector &= ~(7 << 12); // clean GPIO14 
+	selector &= ~(7 << 12); // clean GPIO14
 	selector |= (4 << 12);	// Set alt0 for GPIO14 (TXD)
-	selector &= ~(7 << 15); // clean GPIO15 
+	selector &= ~(7 << 15); // clean GPIO15
 	selector |= (4 << 15);	// Set alt0 for GPIO15 (RXD)
 	put32(GPFSEL1, selector);
 
@@ -59,14 +59,14 @@ void uart_init(void)
 	put32(GPPUDCLK0, 0);
 
 	unsigned int base_uart_clock = 48000000;
-    unsigned int baud_rate = 115200;
+	unsigned int baud_rate = 115200;
 
-    // avoid floating-point arithmetic
-    unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
-    unsigned int remainder = base_uart_clock % (16 * baud_rate);
-    unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
-    if ((remainder % baud_rate) >= (baud_rate / 2)) fractional_baud_rate_divisor++;
-
+	// avoid floating-point arithmetic
+	unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
+	unsigned int remainder = base_uart_clock % (16 * baud_rate);
+	unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
+	if ((remainder % baud_rate) >= (baud_rate / 2))
+		fractional_baud_rate_divisor++;
 
 	// 1. Disable the UART
 	put32(UARTCR, 0);
