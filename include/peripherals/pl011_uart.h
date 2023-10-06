@@ -11,7 +11,7 @@
 #define UARTFR   (PBASE+0x018)  // Flag Register
 #define UARTIBRD (PBASE+0x024)  // Integer Baud Rate Register
 #define UARTFBRD (PBASE+0x028)  // Fractional Baud Rate Register
-#define UARTLCRH (PBASE+0x02C)  // Line Control Register
+#define UARTLCR_H (PBASE+0x02C)  // Line Control Register
 #define UARTCR   (PBASE+0x030)  // Control Register
 #define UARTIMSC (PBASE+0x038)  // Interrupt Mask Set/Clear Register
 #define UARTICR  (PBASE+0x044)  // Interrupt Clear Register
