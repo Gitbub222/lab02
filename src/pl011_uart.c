@@ -58,15 +58,15 @@ void uart_init(void)
 
 	put32(GPPUDCLK0, 0);
 
-	unsigned int base_uart_clock = 48000000;
-	unsigned int baud_rate = 115200;
+	// unsigned int base_uart_clock = 48000000;
+	// unsigned int baud_rate = 115200;
 
-	// avoid floating-point arithmetic
-	unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
-	unsigned int remainder = base_uart_clock % (16 * baud_rate);
-	unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
-	if ((remainder % baud_rate) >= (baud_rate / 2))
-		fractional_baud_rate_divisor++;
+	// // avoid floating-point arithmetic
+	// unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
+	// unsigned int remainder = base_uart_clock % (16 * baud_rate);
+	// unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
+	// if ((remainder % baud_rate) >= (baud_rate / 2))
+	// 	fractional_baud_rate_divisor++;
 
 	// 1. Disable the UART
 	put32(UARTCR, 0);
@@ -79,10 +79,10 @@ void uart_init(void)
 	}
 
 	// Set the baud rate divisor in the UARTIBRD register
-	put32(UARTIBRD, baud_rate_divisor);
+	put32(UARTIBRD, 0x2);
 
 	// Set the baud rate fraction in the UARTFBRD register
-	put32(UARTFBRD, fractional_baud_rate_divisor);
+	put32(UARTFBRD, 0xB);
 
 	// 3. Flush the transmit FIFO by setting the FEN bit to 0 in the Line Control Register, UARTLCR_H.
 	put32(UARTLCR_H, get32(UARTLCR_H) & ~16);
