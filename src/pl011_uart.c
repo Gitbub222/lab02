@@ -58,12 +58,15 @@ void uart_init(void)
 
 	put32(GPPUDCLK0, 0);
 
-	double base_uart_clock = 48000000;
-	double baud_rate = 115200;
-	double baud_rate_divisor = base_uart_clock / (16 * baud_rate);
-	int integer_baud_rate_divisor = (int)baud_rate_divisor;
-	double fraction_part = baud_rate_divisor - integer_baud_rate_divisor;
-	int fractional_baud_rate_divisor = ((fraction_part * 64) + 0.5);
+	unsigned int base_uart_clock = 48000000;
+    unsigned int baud_rate = 115200;
+
+    // avoid floating-point arithmetic
+    unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
+    unsigned int remainder = base_uart_clock % (16 * baud_rate);
+    unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
+    if ((remainder % baud_rate) >= (baud_rate / 2)) fractional_baud_rate_divisor++;
+
 
 	// 1. Disable the UART
 	put32(UARTCR, 0);
@@ -76,7 +79,7 @@ void uart_init(void)
 	}
 
 	// Set the baud rate divisor in the UARTIBRD register
-	put32(UARTIBRD, integer_baud_rate_divisor);
+	put32(UARTIBRD, baud_rate_divisor);
 
 	// Set the baud rate fraction in the UARTFBRD register
 	put32(UARTFBRD, fractional_baud_rate_divisor);
