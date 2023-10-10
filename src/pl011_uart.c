@@ -1,31 +1,24 @@
 #include "utils.h"
 #include "peripherals/pl011_uart.h"
 #include "peripherals/gpio.h"
+#include <stdint.h>
 
 void uart_send(char c)
 {
-	// implement send function here for pl011
-	while (1)
-	{
-		if (get32(UARTFR) & (1 << 5))
-			break;
-	}
+	// Wait until the UART FIFO is not full
+	while (get32(UARTFR) & (1 << 5)); // Wait until TXFF (Transmit FIFO Full) is clear
 
-	// Write UART Data Register
+	// Send the character
 	put32(UARTDR, c);
 }
 
 char uart_recv(void)
 {
-	// implement wait
-	while (1)
-	{
-		if (get32(UARTFR) & (1 << 4))
-			break;
-	}
+	// Wait until the UART FIFO has data
+	while (get32(UARTFR) & (1 << 4)); // Wait until RXFE (Receive FIFO Empty) is clear
 
-	// Read and return UART Data Register
-	return (get32(UARTDR) & 0xFF);
+	// Return the received character
+	return (char)(get32(UARTDR) & 0xFF);
 }
 
 void uart_send_string(char *str)
@@ -38,58 +31,50 @@ void uart_send_string(char *str)
 
 void uart_init(void)
 {
-	// implement init function here for pl011
+	unsigned int selector;
 
-	// (A) Configure GPIO pins
-	unsigned int selector = get32(GPFSEL1);
-	selector &= ~(7 << 12); // clean GPIO14
-	selector |= (4 << 12);	// Set alt0 for GPIO14 (TXD)
-	selector &= ~(7 << 15); // clean GPIO15
-	selector |= (4 << 15);	// Set alt0 for GPIO15 (RXD)
+	selector = get32(GPFSEL1);
+	selector &= ~(7 << 12); // clean gpio14
+	selector |= 2 << 12;	// set alt5 for gpio14
+	selector &= ~(7 << 15); // clean gpio15
+	selector |= 2 << 15;	// set alt5 for gpio15
 	put32(GPFSEL1, selector);
 
-	// Disable pull-up/pull-down control line
 	put32(GPPUD, 0);
 	delay(150);
-
-	// Disable pull-up/pull-down for pin 14,15
 	put32(GPPUDCLK0, (1 << 14) | (1 << 15));
 	delay(150);
-
 	put32(GPPUDCLK0, 0);
 
-	// unsigned int base_uart_clock = 48000000;
-	// unsigned int baud_rate = 115200;
+	// Mask all interrupts by setting corresponding bits to 1
+	put32(UARTIMSC, 0x7ff);
 
-	// // avoid floating-point arithmetic
-	// unsigned int baud_rate_divisor = base_uart_clock / (16 * baud_rate);
-	// unsigned int remainder = base_uart_clock % (16 * baud_rate);
-	// unsigned int fractional_baud_rate_divisor = (8 * remainder / baud_rate) >> 1;
-	// if ((remainder % baud_rate) >= (baud_rate / 2))
-	// 	fractional_baud_rate_divisor++;
+	// Disable DMA by setting all bits to 0
+	put32(UARTDMACR, 0);
 
-	// 1. Disable the UART
-	put32(UARTCR, 0);
+	// Wait for the end of transmission or reception of the current character
+	while (!(get32(UARTFR) & (1 << 7)))
+		; // Wait until TXFE (Transmit FIFO Empty) is set
+	while (get32(UARTFR) & (1 << 4))
+		; // Wait until RXFE (Receive FIFO Empty) is clear
 
-	// 2. Wait for the end of transmission or reception of the current character
-	while (1)
-	{
-		if (get32(UARTFR) & ~8)
-			break;
-	}
+	// Flush the transmit FIFO by setting the FEN bit to 0 in the Line Control Register, UARTLCR_H
+	put32(UARTLCR_H, get32(UARTLCR_H) & ~(1 << 4)); // Clear FEN bit
+	put32(UARTLCR_H, get32(UARTLCR_H) | (1 << 4));	// Set FEN bit back to enable FIFO
 
-	// Set the baud rate divisor in the UARTIBRD register
-	put32(UARTIBRD, 0x2);
+	// Set the baud rate
+	// 48MHz UART clock; baud rate 115200:
+	// Baud rate divisor = UART clock / (16 * Baud rate) = 48,000,000 / (16 * 115200) = 26.0416667
+	// Fractional part = round(0.0416667 * 64) = 3
 
-	// Set the baud rate fraction in the UARTFBRD register
-	put32(UARTFBRD, 0xB);
+	// Set the baud rate
+	put32(UARTIBRD, 26); // Integer part
+	put32(UARTFBRD, 3);	 // Fractional part
 
-	// 3. Flush the transmit FIFO by setting the FEN bit to 0 in the Line Control Register, UARTLCR_H.
-	put32(UARTLCR_H, get32(UARTLCR_H) & ~16);
+	// Configure the UART line control register
+	// Word length (8 bits), enable FIFOs
+	put32(UARTLCR_H, (3 << 5) | (1 << 4));
 
-	// 4. Reprogram the Control Register, UART_CR
-	put32(UARTCR, 1 | 256 | 512);
-
-	// 5. Enable the UART
-	put32(UARTCR, get32(UARTCR) | 1);
+	// Enable the UART; enable transmit and receive
+	put32(UARTCR, (1 << 0) | (1 << 8) | (1 << 9));
 }
