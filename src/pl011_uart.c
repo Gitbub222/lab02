@@ -2,7 +2,7 @@
 #include "peripherals/pl011_uart.h"
 #include "peripherals/gpio.h"
 
-void pl011_uart_send(char ch)
+void uart_send(char ch)
 {
     /*Transmit FIFO is full*/
     while (get32(UARTFR) & (1<<5))
@@ -12,7 +12,7 @@ void pl011_uart_send(char ch)
     put32(UARTDR, ch);
 }
 
-char pl011_uart_recv(void)
+char uart_recv(void)
 {
     /*Receive FIFO is empty*/
     while (get32(UARTFR) & (1<<4))
@@ -22,15 +22,15 @@ char pl011_uart_recv(void)
     return (get32(UARTDR) & 0xFF);
 }
 
-void pl011_uart_send_string(char* str)
+void uart_send_string(char* str)
 {
     for (int i = 0; str[i] != '\0'; i++)
     {
-        pl011_uart_send((char)str[i]);
+       uart_send((char)str[i]);
     }
 }
 
-void pl011_uart_init(void)
+void uart_init(void)
 {
     unsigned int selector;
 
