@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "peripherals/pl011_uart.h"
 #include "peripherals/gpio.h"
+#include <stdint.h>
 
 void uart_send(char ch)
 {
@@ -48,6 +49,7 @@ void uart_init(void)
     put32(GPPUDCLK0, (1<<14 | 1<<15));
     delay(150);
     put32(GPPUDCLK0, 0);
+
 
     /*Initializing PL011 uart*/
     put32(UARTCR, 0);                      // disable uart
